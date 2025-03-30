@@ -1206,14 +1206,34 @@ function getBoundingBox(landmarks) {
 
 async function preloadModels() {
     try {
-
+        // First try to load the pre-trained model from the server
         try {
-            model = await tf.loadLayersModel('indexeddb://my_model');
-            console.log("Preloaded model from IndexedDB");
-            document.getElementById("dummy").innerText = "Saved model found! Ready to make predictions.";
+            console.log("Trying to load pre-trained model...");
+            model = await tf.loadLayersModel('my_model.json');
+            console.log("Successfully loaded pre-trained model");
+            document.getElementById("dummy").innerText = "Pre-trained model loaded! Ready to make predictions.";
+            
+            // Save to IndexedDB for future use
+            try {
+                await model.save('indexeddb://my_model');
+                console.log("Pre-trained model saved to IndexedDB for future use");
+            } catch (e) {
+                console.log("Could not save pre-trained model to IndexedDB:", e.message);
+            }
+            
             return true;
         } catch (e) {
-            console.log("No saved model in IndexedDB:", e.message);
+            console.log("Failed to load pre-trained model:", e.message);
+            
+            // Fall back to IndexedDB
+            try {
+                model = await tf.loadLayersModel('indexeddb://my_model');
+                console.log("Preloaded model from IndexedDB");
+                document.getElementById("dummy").innerText = "Saved model found! Ready to make predictions.";
+                return true;
+            } catch (e) {
+                console.log("No saved model in IndexedDB:", e.message);
+            }
         }
         
         return false;
@@ -1337,17 +1357,39 @@ async function tryWebcamWithFallbacks() {
     }
 }
 
+// Function to guide user to start playing directly with pre-trained model
+function startWithPretrainedModel() {
+    // Show a guidance message
+    const feedbackElement = document.getElementById("dummy");
+    feedbackElement.innerHTML = "<strong>Pre-trained model loaded!</strong> You can start playing immediately or train your own model for best results.";
+    
+    // Add a slight delay before showing the success indicator
+    setTimeout(() => {
+        document.getElementById('success-train').style.display = 'block';
+        
+        // Highlight the Start Game button to guide users
+        document.getElementById("startPredicting").classList.add('glow');
+        
+        // Auto-switch to Play phase after a moment
+        setTimeout(() => {
+            switchToPhase('play');
+            markPhaseComplete('train');
+            markPhaseComplete('practice');
+        }, 1500);
+    }, 1000);
+}
 
+// Enhance init function with better loading sequence
 async function init() {
     showLoading(true, "Initializing...");
     
     try {
-
+        // Create dynamic loading progress updates
         const stages = [
             { name: "Loading MobileNet model...", weight: 40 },
             { name: "Setting up camera...", weight: 20 },
             { name: "Initializing hand detection...", weight: 30 },
-            { name: "Checking for saved models...", weight: 10 }
+            { name: "Loading pre-trained model...", weight: 10 }
         ];
         
         let completedWeight = 0;
@@ -1359,7 +1401,7 @@ async function init() {
             }
         };
         
-
+        // Load MobileNet first for faster perceived performance
         updateProgressStage("Loading MobileNet model...");
         mobilenet = await loadMobilenet();
         if (!mobilenet) {
@@ -1367,19 +1409,19 @@ async function init() {
         }
         console.log("MobileNet loaded");
 
-
+        // Try to set up webcam with fallbacks
         updateProgressStage("Setting up camera...");
         const webcamSuccess = await tryWebcamWithFallbacks();
         if (!webcamSuccess) {
             console.error("All webcam attempts failed");
         }
         
-
+        // Initialize hand detection
         updateProgressStage("Initializing hand detection...");
         canvas = document.getElementById("handCanvas");
         ctx = canvas.getContext("2d");
         
-
+        // Initialize hand guide overlay
         const handGuideOverlay = document.querySelector('.hand-guide-overlay');
         
         hands = new Hands({
@@ -1398,15 +1440,19 @@ async function init() {
         await hands.initialize();
         console.log("MediaPipe Hands initialized");
         
-
-        updateProgressStage("Checking for saved models...");
+        // Try to preload pre-trained model
+        updateProgressStage("Loading pre-trained model...");
         const modelPreloaded = await preloadModels();
         if (modelPreloaded) {
+            // Highlight relevant UI elements to show ready state
             document.getElementById("loadModel").classList.add('glow');
             setTimeout(() => document.getElementById("loadModel").classList.remove('glow'), 1000);
+            
+            // Use the new function to guide users to play directly
+            startWithPretrainedModel();
         }
         
-
+        // Everything is loaded
         showLoading(false);
         updateStatus('ready');
         
@@ -1416,7 +1462,7 @@ async function init() {
         showLoading(false);
         updateStatus('error');
         
-
+        // Show error details
         alert("Setup failed: " + error.message + "\nCheck console for details.");
     }
 }
