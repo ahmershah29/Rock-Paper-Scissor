@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPSLS - Neon Tech</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>" type="image/svg+xml">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="webcam.js"></script>
+    <script src="rps-dataset.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        body::-webkit-scrollbar-thumb:hover {
+            background: #00cccc;
+        }
+
+        body {
+            background: #121212;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow-y: auto;
+            background-image: radial-gradient(circle at center, #2a2a2a 0%, #121212 100%);
+        }
+
+        .container {
+            background: rgba(30, 30, 40, 0.9);
+            padding: clamp(1rem, 3vw, 2rem);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .game-title {
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #00ffff;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .video-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto clamp(1rem, 2vw, 2rem);
+            background: #1a1a1a;
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 10px;
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 20px #00ffff, inset 0 0 10px rgba(0, 255, 255, 0.5);
+            background: #000;
+            position: relative;
+            z-index: 10;
+            transform: scaleX(-1); /* Mirror video for more intuitive interaction */
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 10px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+            background: transparent;
+            z-index: 15; /* Over video for hand detection */
+            transform: scaleX(-1); /* Mirror canvas to match video */
+        }
+
+        .hand-guide-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: scaleX(-1);
+        }
+
+        .hand-guide {
+            width: 70%;
+            height: 70%;
+            border: 2px dashed rgba(0, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.5;
+            animation: pulse-guide 2s infinite;
+        }
+
+        .hand-guide::after {
+            content: '👋';
+            font-size: 24px;
+            opacity: 0.7;
+        }
+
+        @keyframes pulse-guide {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+
+        .hand-detected .hand-guide {
+            border-color: rgba(0, 255, 0, 0.7);
+            animation: detected 1s infinite;
+        }
+
+        .hand-detected .hand-guide::after {
+            content: '✓';
+            color: #00ff00;
+        }
+
+        @keyframes detected {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); }
+        }
+
+        .gesture-guide {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+            background: rgba(255, 255, 0, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .panel {
+            background: rgba(20, 20, 30, 0.7);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            color: #00ffff;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px #00ffff;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: clamp(0.5rem, 1vw, 1rem);
+            margin-bottom: clamp(0.5rem, 1vw, 1rem);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: rgba(0, 255, 255, 0.2);
+            color: #ffffff;
+            border: 2px solid #00ffff;
+        }
+
+        .btn-secondary {
+            background: rgba(51, 51, 51, 0.7);
+            color: #00ffff;
+            border: 1px solid #00ffff;
+        }
+
+        .btn-action {
+            background: rgba(255, 0, 255, 0.2);
+            color: #ffffff;
+            border: 2px solid #ff00ff;
+        }
+
+        button {
+            padding: clamp(0.5rem, 1.5vw, 0.75rem);
+            font-size: clamp(12px, 2vw, 16px);
+            background: rgba(51, 51, 51, 0.7);
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            font-weight: 700;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover {
+            background: rgba(0, 255, 255, 0.2);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transform: translateY(-3px);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .glow {
+            background: rgba(0, 255, 255, 0.3);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 255, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+        }
+
+        .predicting {
+            position: relative;
+        }
+
+        .predicting::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ff0055;
+            top: 5px;
+            right: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        .samples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: clamp(0.5rem, 1vw, 1rem);
+            margin-bottom: clamp(0.5rem, 1vw, 1rem);
+            font-size: clamp(10px, 1.8vw, 14px);
+            color: #ff00ff;
+            text-shadow: 0 0 5px #ff00ff;
+            background: rgba(255, 0, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #status {
+            font-size: clamp(12px, 2vw, 16px);
+            color: #00ffff;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .feedback-message {
+            font-size: clamp(10px, 1.8vw, 14px);
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+            margin: clamp(0.5rem, 1vw, 0.75rem) 0;
+            padding: clamp(0.5rem, 1vw, 0.75rem);
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 8px;
+            line-height: 1.5;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .game-results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            font-size: clamp(14px, 2.5vw, 18px);
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+            margin-top: clamp(0.5rem, 1vw, 0.75rem);
+            font-weight: 700;
+            background: rgba(255, 255, 0, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        #prediction.active {
+            animation: highlight 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { background: rgba(255, 255, 0, 0.2); }
+            100% { background: rgba(255, 255, 0, 0.05); }
+        }
+
+        /* Training progress styles */
+        .training-progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+            transition: width 0.3s ease;
+        }
+
+        /* Score highlighting animation */
+        .highlight-score {
+            animation: scoreUpdate 0.5s ease;
+        }
+
+        @keyframes scoreUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background: rgba(255, 255, 0, 0.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Celebration animation for speed challenge completion */
+        .celebration {
+            animation: celebrate 3s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); background: rgba(255, 255, 0, 0.05); }
+            10% { transform: scale(1.1); background: rgba(0, 255, 0, 0.2); }
+            20% { transform: scale(1.05); background: rgba(0, 255, 255, 0.2); }
+            30% { transform: scale(1.1); background: rgba(255, 0, 255, 0.2); }
+            40% { transform: scale(1.05); background: rgba(255, 255, 0, 0.2); }
+            50% { transform: scale(1.1); background: rgba(0, 255, 0, 0.2); }
+            60% { transform: scale(1.05); background: rgba(0, 255, 255, 0.2); }
+            70% { transform: scale(1.1); background: rgba(255, 0, 255, 0.2); }
+            80% { transform: scale(1.05); background: rgba(255, 255, 0, 0.2); }
+            90% { transform: scale(1.02); background: rgba(0, 255, 0, 0.1); }
+            100% { transform: scale(1); background: rgba(255, 255, 0, 0.05); }
+        }
+
+        /* Make active game elements more noticeable */
+        .active {
+            border-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            animation: activeElement 2s infinite;
+        }
+
+        @keyframes activeElement {
+            0% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); }
+        }
+
+        #history {
+            font-size: clamp(10px, 1.8vw, 14px);
+            color: #00ccff;
+            text-shadow: 0 0 5px #00ccff;
+            margin-top: clamp(0.5rem, 1vw, 1rem);
+            background: rgba(0, 204, 255, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        #history::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #history::-webkit-scrollbar-thumb {
+            background: #00ccff;
+        }
+
+        #credit {
+            font-size: clamp(8px, 1.5vw, 12px);
+            color: #ffffff;
+            text-shadow: 0 0 3px #ffffff;
+            margin-top: clamp(0.75rem, 2vw, 1.5rem);
+            opacity: 0.6;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ffff;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-message {
+            margin-top: 15px;
+            color: #00ffff;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            max-width: 80%;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Improved Help Button */
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            z-index: 90;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .help-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+        }
+
+        /* Enhanced Tutorial Overlay */
+        #tutorial {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            overflow-y: auto;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+
+        .tutorial-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tutorial-header {
+            background: rgba(0, 255, 255, 0.2);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .tutorial-header h3 {
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .tutorial-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-close:hover {
+            transform: scale(1.2);
+            color: #00ffff;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .tutorial-nav-item {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            position: relative;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .tutorial-nav-item.active {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .tutorial-nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .tutorial-content {
+            padding: 25px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .tutorial-section {
+            display: none;
+        }
+
+        .tutorial-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tutorial-gesture {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-gesture:hover {
+            background: rgba(0, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .gesture-icon {
+            font-size: 36px;
+            margin-right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .gesture-details {
+            text-align: left;
+        }
+
+        .gesture-name {
+            font-weight: bold;
+            color: #00ffff;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .tutorial-steps {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tutorial-steps h4 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .step-item {
+            display: flex;
+            margin-bottom: 12px;
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            flex: 1;
+            padding-top: 3px;
+        }
+
+        .tutorial-footer {
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .tutorial-button {
+            padding: 10px 20px;
+            background: rgba(0, 255, 255, 0.2);
+            color: white;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .tutorial-button:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        @media (max-width: 767px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .video-container {
+                max-width: 280px;
+            }
+            
+            .button-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .panel {
+                padding: 8px;
+            }
+            
+            .button-group {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .samples {
+                grid-template-columns: 1fr 1fr;
+                font-size: 10px;
+            }
+            
+            .feedback-message, #history {
+                font-size: 10px;
+                padding: 0.5rem;
+            }
+            
+            .result-item {
+                font-size: 12px;
+            }
+            
+            #credit {
+                font-size: 8px;
+            }
+        }
+
+        /* Step indicator styles */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 8px 5px;
+            position: relative;
+            z-index: 2;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .step.active {
+            opacity: 1;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .step.completed {
+            opacity: 0.8;
+            color: #00ff00;
+        }
+
+        .step-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+
+        .step-progress {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            z-index: 1;
+            transition: width 0.5s ease;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            margin-bottom: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .step.active .step-number {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .step.completed .step-number {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: rgba(0, 255, 0, 0.3);
+        }
+
+        /* Phase panels */
+        .phase-panel {
+            display: none;
+        }
+
+        .phase-panel.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Game state indicator */
+        .game-state {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #00ffff;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        /* Coaching tips */
+        .coach-tip {
+            background: rgba(255, 255, 0, 0.1);
+            border-left: 3px solid #ffff00;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #ffff00;
+            text-shadow: none;
+        }
+
+        .coach-tip::before {
+            content: '💡 Tip: ';
+            font-weight: bold;
+        }
+
+        /* Success indicator */
+        .success-indicator {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success-indicator::before {
+            content: '✓ ';
+        }
+
+        /* Intro screen */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #121212 0%, #2a2a2a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .intro-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+
+        .intro-logo {
+            max-width: 90%;
+            width: 500px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7));
+            animation: pulse-logo 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-logo {
+            0% { filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7)); }
+            50% { filter: drop-shadow(0 0 25px rgba(255, 0, 255, 0.7)); }
+            100% { filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.7)); }
+        }
+
+        .intro-tagline {
+            font-size: 1.5rem;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite linear;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+
+        .gesture-intro {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        .gesture-intro-item {
+            font-size: 30px;
+            margin: 0 5px;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        .gesture-intro-item:nth-child(1) { animation-delay: 0s; }
+        .gesture-intro-item:nth-child(2) { animation-delay: 0.2s; }
+        .gesture-intro-item:nth-child(3) { animation-delay: 0.4s; }
+        .gesture-intro-item:nth-child(4) { animation-delay: 0.6s; }
+        .gesture-intro-item:nth-child(5) { animation-delay: 0.8s; }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Intro Screen -->
+    <div class="intro-screen" id="introScreen">
+        <svg class="intro-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00ffff" />
+                    <stop offset="100%" style="stop-color:#ff00ff" />
+                </linearGradient>
+            </defs>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="url(#logoGradient)" font-family="Orbitron, sans-serif" font-weight="bold" font-size="40">ROCK PAPER SCISSORS</text>
+            <text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="url(#logoGradient)" font-family="Orbitron, sans-serif" font-weight="bold" font-size="50">LIZARD SPOCK</text>
+        </svg>
+        
+        <div class="intro-tagline">The AI-powered hand gesture game</div>
+        
+        <button class="start-btn" onclick="startApp()">START GAME</button>
+        
+        <div class="gesture-intro">
+            <div class="gesture-intro-item">👊</div>
+            <div class="gesture-intro-item">✋</div>
+            <div class="gesture-intro-item">✌️</div>
+            <div class="gesture-intro-item">🖖</div>
+            <div class="gesture-intro-item">🤏</div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <!-- Loading message will be added by JavaScript -->
+    </div>
+
+    <div class="container">
+        <h1 class="game-title">Rock Paper Scissors Lizard Spock</h1>
+        
+        <!-- Game State Indicator -->
+        <div class="game-state" id="gameState">Training Mode</div>
+        
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" data-phase="train" onclick="switchToPhase('train')">
+                <div class="step-number">1</div>
+                <div>Train</div>
+            </div>
+            <div class="step" data-phase="practice" onclick="switchToPhase('practice')">
+                <div class="step-number">2</div>
+                <div>Practice</div>
+            </div>
+            <div class="step" data-phase="play" onclick="switchToPhase('play')">
+                <div class="step-number">3</div>
+                <div>Play</div>
+            </div>
+            <div class="step" data-phase="challenge" onclick="switchToPhase('challenge')">
+                <div class="step-number">4</div>
+                <div>Challenge</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-progress" style="width: 25%"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <video autoplay playsinline muted id="wc" width="224" height="224"></video>
+                    <canvas id="handCanvas" width="224" height="224"></canvas>
+                    <div class="hand-guide-overlay">
+                        <div class="hand-guide"></div>
+                    </div>
+                </div>
+                
+                <div class="gesture-guide">
+                    Make hand gestures to play • Show your move to the camera
+                </div>
+                
+                <div id="status">Status: <span class="status-indicator status-inactive"></span> Initializing...</div>
+                
+                <div id="success-train" class="success-indicator">Training completed successfully! You can now start playing.</div>
+                
+                <!-- Training Progress Indicator -->
+                <div class="panel" id="trainingProgressPanel" style="display: none;">
+                    <div class="panel-title">Training Progress</div>
+                    <div class="training-progress">
+                        <div class="progress-bar" id="trainingProgressBar"></div>
+                    </div>
+                    <div id="trainingStatus" style="text-align: center; margin-top: 8px;">Preparing model...</div>
+                </div>
+                
+                <!-- Game Timer -->
+                <div class="panel" id="gameTimerPanel" style="display: none;">
+                    <div class="panel-title">Game Session</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <div>Time: <span id="gameTimer">00:00</span></div>
+                        <div>Moves: <span id="movesCounter">0</span></div>
+                    </div>
+                </div>
+                
+                <div class="game-results">
+                    <div id="prediction" class="result-item"></div>
+                    <div id="gameResult" class="result-item"></div>
+                    <div id="scores" class="result-item"></div>
+                    <div id="speedResult" class="result-item"></div>
+                    <div id="history"></div>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <!-- Phase 1: Training Mode -->
+                <div id="train-phase" class="phase-panel active">
+                    <div class="coach-tip">First, let's train the AI to recognize your hand gestures. Click each button below while showing the corresponding gesture.</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Step 1: Capture Training Samples</div>
+                        <div class="button-group">
+                            <button type="button" id="0" onclick="handleButton(this)" ontouchstart="handleButton(this)">Rock</button>
+                            <button type="button" id="1" onclick="handleButton(this)" ontouchstart="handleButton(this)">Paper</button>
+                            <button type="button" id="2" onclick="handleButton(this)" ontouchstart="handleButton(this)">Scissors</button>
+                            <button type="button" id="3" onclick="handleButton(this)" ontouchstart="handleButton(this)">Spock</button>
+                            <button type="button" id="4" onclick="handleButton(this)" ontouchstart="handleButton(this)">Lizard</button>
+                            <button type="button" id="5" onclick="handleButton(this)" ontouchstart="handleButton(this)">Custom</button>
+                        </div>
+                        
+                        <div class="samples">
+                            <div id="rocksamples">Rock Samples: 0</div>
+                            <div id="papersamples">Paper Samples: 0</div>
+                            <div id="scissorssamples">Scissors Samples: 0</div>
+                            <div id="spocksamples">Spock Samples: 0</div>
+                            <div id="lizardsamples">Lizard Samples: 0</div>
+                            <div id="customsamples">Custom Samples: 0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Step 2: Train The AI</div>
+                        <div class="coach-tip">Collect at least 15 samples for each gesture, then train the network.</div>
+                        <div class="button-group">
+                            <button type="button" id="train" class="btn-primary" onclick="doTraining(); markPhaseComplete('train');" ontouchstart="doTraining(); markPhaseComplete('train');">Train Network</button>
+                            <button type="button" id="moreSamples" onclick="addMoreSamples()" ontouchstart="addMoreSamples()">Add More Samples</button>
+                        </div>
+                        <div id="modelStats" class="feedback-message" style="margin-top:10px;"></div>
+                    </div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Save/Load Your Training</div>
+                        <div class="coach-tip">Save your model to use later, or load a previously trained model.</div>
+                        <div class="button-group">
+                            <button type="button" id="saveModel" onclick="saveModel()" ontouchstart="saveModel()">Save Model</button>
+                            <button type="button" id="loadModel" onclick="loadModel(); markPhaseComplete('train');" ontouchstart="loadModel(); markPhaseComplete('train');">Load Model</button>
+                            <button type="button" id="saveDataset" onclick="saveDataset()" ontouchstart="saveDataset()">Save Dataset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Phase 2: Practice Mode -->
+                <div id="practice-phase" class="phase-panel">
+                    <div class="coach-tip">Practice mode lets you test if your gestures are recognized correctly. Try all gestures without playing against the computer.</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Practice Controls</div>
+                        <div class="button-group">
+                            <button type="button" id="startPractice" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Practice Mode';" ontouchstart="startPredicting(); document.getElementById('gameState').textContent = 'Practice Mode';">Start Practice</button>
+                            <button type="button" id="stopPractice" onclick="stopPredicting()" ontouchstart="stopPredicting()">Stop Practice</button>
+                        </div>
+                    </div>
+                    
+                    <div id="dummy-practice" class="feedback-message">Show your hand gestures to the camera to see if they're recognized correctly.</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Ready to Play?</div>
+                        <button type="button" class="btn-action" onclick="switchToPhase('play'); markPhaseComplete('practice');" ontouchstart="switchToPhase('play'); markPhaseComplete('practice');">Continue to Game Mode</button>
+                    </div>
+                </div>
+                
+                <!-- Phase 3: Game Mode -->
+                <div id="play-phase" class="phase-panel">
+                    <div class="coach-tip">Now it's time to play against the computer! Make your gesture, and the computer will make its move.</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Game Controls</div>
+                        <div class="button-group">
+                            <button type="button" id="startPredicting" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Game Mode';" ontouchstart="startPredicting(); document.getElementById('gameState').textContent = 'Game Mode';">Start Game</button>
+                            <button type="button" id="stopPredicting" onclick="stopPredicting()" ontouchstart="stopPredicting()">Stop Game</button>
+                        </div>
+                    </div>
+                    
+                    <div id="dummy" class="feedback-message">Show your gesture to the camera to play against the computer!</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Game Rules</div>
+                        <div class="step-text">• Rock crushes Scissors & Lizard</div>
+                        <div class="step-text">• Paper covers Rock & disproves Spock</div>
+                        <div class="step-text">• Scissors cuts Paper & decapitates Lizard</div>
+                        <div class="step-text">• Lizard poisons Spock & eats Paper</div>
+                        <div class="step-text">• Spock smashes Scissors & vaporizes Rock</div>
+                    </div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Ready for a Challenge?</div>
+                        <button type="button" class="btn-action" onclick="switchToPhase('challenge'); markPhaseComplete('play');" ontouchstart="switchToPhase('challenge'); markPhaseComplete('play');">Continue to Challenge Mode</button>
+                    </div>
+                </div>
+                
+                <!-- Phase 4: Challenge Mode -->
+                <div id="challenge-phase" class="phase-panel">
+                    <div class="coach-tip">Challenge yourself with special game modes! Try to beat the computer in rapid succession or play with a friend.</div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Game Modes</div>
+                        <div class="button-group">
+                            <button type="button" id="multiplayer" onclick="toggleMultiplayer()" ontouchstart="toggleMultiplayer()">Multiplayer: Off</button>
+                            <button type="button" id="speedChallenge" class="btn-action" onclick="startSpeedChallenge(); document.getElementById('gameState').textContent = 'Speed Challenge';" ontouchstart="startSpeedChallenge(); document.getElementById('gameState').textContent = 'Speed Challenge';">Speed Challenge</button>
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <div class="panel-title">Settings</div>
+                        <div class="button-group">
+                            <button type="button" id="boostMode" onclick="toggleBoostMode()" ontouchstart="toggleBoostMode()">Boost Mode: Off</button>
+                            <button type="button" id="music" onclick="toggleMusic()" ontouchstart="toggleMusic()">Music: Off</button>
+                        </div>
+                    </div>
+                    
+                    <div id="leaderboard" class="result-item" style="margin-top:15px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="credit">Created by Syed Ahmer Shah - Enhanced UI/UX Version</div>
+    </div>
+
+    <!-- Floating Help Button -->
+    <div class="help-button" onclick="toggleTutorial()" ontouchstart="toggleTutorial()">
+        <span>?</span>
+    </div>
+
+    <!-- Enhanced Tutorial/Help Interface -->
+    <div id="tutorial">
+        <div class="tutorial-container">
+            <div class="tutorial-header">
+                <h3>Game Guide</h3>
+                <button class="tutorial-close" onclick="toggleTutorial()">&times;</button>
+            </div>
+            
+            <div class="tutorial-nav">
+                <button class="tutorial-nav-item active" onclick="switchTutorialTab('gestures')">Hand Gestures</button>
+                <button class="tutorial-nav-item" onclick="switchTutorialTab('howtoplay')">How to Play</button>
+                <button class="tutorial-nav-item" onclick="switchTutorialTab('troubleshooting')">Troubleshooting</button>
+            </div>
+            
+            <div class="tutorial-content">
+                <!-- Gestures Tab -->
+                <div id="gestures-tab" class="tutorial-section active">
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">👊</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Rock</div>
+                            <div class="gesture-description">Make a fist with your hand, keeping all fingers curled in.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">✋</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Paper</div>
+                            <div class="gesture-description">Open your hand completely with fingers extended and together.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">✌️</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Scissors</div>
+                            <div class="gesture-description">Extend your index and middle fingers in a V shape, with other fingers curled in.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">🖖</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Spock</div>
+                            <div class="gesture-description">Make the Vulcan salute by spreading your fingers with a gap between middle and ring finger.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">🤏</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Lizard</div>
+                            <div class="gesture-description">Create a mouth shape by bringing your fingers together with thumb connected to fingertips.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-gesture">
+                        <div class="gesture-icon">👆</div>
+                        <div class="gesture-details">
+                            <div class="gesture-name">Custom</div>
+                            <div class="gesture-description">Define your own unique gesture! Be consistent when training.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- How to Play Tab -->
+                <div id="howtoplay-tab" class="tutorial-section">
+                    <div class="tutorial-steps">
+                        <h4>Getting Started</h4>
+                        
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">Allow camera access when prompted to enable hand detection.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">For each gesture (Rock, Paper, etc.), click its button 15-20 times while showing that gesture to the camera.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">Hold your hand in the center of the camera view for best results.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-text">Click the "Train Network" button to create your personalized gesture recognition model.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-steps">
+                        <h4>Playing the Game</h4>
+                        
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">After training, click "Start Game" to begin playing against the AI.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">Show your gesture to the camera and hold it steady.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">The AI will make its move and the results will be shown below.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-text">Your score will be tracked and saved to the leaderboard.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-steps">
+                        <h4>Game Rules</h4>
+                        <div class="step-text" style="margin-bottom: 10px;">
+                            <strong>Who Beats Who:</strong>
+                        </div>
+                        <div class="step-text">• Scissors cuts Paper</div>
+                        <div class="step-text">• Paper covers Rock</div>
+                        <div class="step-text">• Rock crushes Lizard</div>
+                        <div class="step-text">• Lizard poisons Spock</div>
+                        <div class="step-text">• Spock smashes Scissors</div>
+                        <div class="step-text">• Scissors decapitates Lizard</div>
+                        <div class="step-text">• Lizard eats Paper</div>
+                        <div class="step-text">• Paper disproves Spock</div>
+                        <div class="step-text">• Spock vaporizes Rock</div>
+                        <div class="step-text">• Rock crushes Scissors</div>
+                    </div>
+                </div>
+                
+                <!-- Troubleshooting Tab -->
+                <div id="troubleshooting-tab" class="tutorial-section">
+                    <div class="tutorial-steps">
+                        <h4>Camera Issues</h4>
+                        
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">Ensure your browser has permission to access your camera.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">Try using Chrome or Firefox for best compatibility.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">Make sure no other applications are using your camera.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-text">Ensure you have adequate lighting for your camera to see your hand clearly.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-steps">
+                        <h4>Model Training</h4>
+                        
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">Collect at least 15 samples for each gesture you want to use.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">If recognition is poor, try "Add More Samples" to refine the model.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">Keep your hand position consistent for each gesture during training.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-text">You can save your trained model using the "Save Model" button for future use.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tutorial-steps">
+                        <h4>Loading Models</h4>
+                        
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">If "Load Model" doesn't work automatically, select both the .json and .weights.bin files when prompted.</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">Your model is saved in your browser and should load automatically in future sessions.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tutorial-footer">
+                <button class="tutorial-button" onclick="toggleTutorial()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Changed to desi funny techy music -->
+    <audio id="bgMusic" src="music/TECHNOLOGIA.mp3" loop></audio>
+
+    <script>
+        // Function to start the app and hide intro screen
+        function startApp() {
+            document.getElementById('introScreen').classList.add('hidden');
+            // Show tutorial after intro screen if first visit
+            if (!localStorage.getItem('tutorialShown')) {
+                setTimeout(() => {
+                    toggleTutorial();
+                    localStorage.setItem('tutorialShown', 'true');
+                }, 1000);
+            }
+        }
+
+        // Tutorial tab switching function
+        function switchTutorialTab(tabName) {
+            // Hide all tutorial sections
+            document.querySelectorAll('.tutorial-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Update tab buttons
+            document.querySelectorAll('.tutorial-nav-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Find and activate clicked tab
+            const tabs = document.querySelectorAll('.tutorial-nav-item');
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].onclick.toString().includes(tabName)) {
+                    tabs[i].classList.add('active');
+                    break;
+                }
+            }
+        }
+
+        // Phase switching function
+        function switchToPhase(phaseName) {
+            // Hide all phases
+            document.querySelectorAll('.phase-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Show selected phase
+            document.getElementById(phaseName + '-phase').classList.add('active');
+            
+            // Update step indicators
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+                if (step.dataset.phase === phaseName) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // Update progress indicator
+            updateStepProgress();
+        }
+        
+        // Mark phase as completed
+        function markPhaseComplete(phaseName) {
+            const completedStep = document.querySelector(`.step[data-phase="${phaseName}"]`);
+            if (completedStep) {
+                completedStep.classList.add('completed');
+                
+                // Find next step
+                const steps = Array.from(document.querySelectorAll('.step'));
+                const currentIndex = steps.indexOf(completedStep);
+                if (currentIndex < steps.length - 1) {
+                    // Show success indicator if applicable
+                    if (phaseName === 'train') {
+                        document.getElementById('success-train').style.display = 'block';
+                        setTimeout(() => {
+                            document.getElementById('success-train').style.display = 'none';
+                        }, 5000);
+                    }
+                }
+            }
+            
+            // Update progress indicator
+            updateStepProgress();
+        }
+        
+        // Update progress bar
+        function updateStepProgress() {
+            const steps = document.querySelectorAll('.step');
+            const completedSteps = document.querySelectorAll('.step.completed').length;
+            const activeStep = document.querySelector('.step.active');
+            const activeIndex = Array.from(steps).indexOf(activeStep);
+            
+            // Calculate progress (completed steps + partial credit for active step)
+            const totalSteps = steps.length;
+            const progress = ((completedSteps + (activeIndex > completedSteps ? 0.5 : 0)) / totalSteps) * 100;
+            
+            // Update progress bar
+            document.querySelector('.step-progress').style.width = `${progress}%`;
+        }
+
+        // Auto-show tutorial on first visit
+        document.addEventListener('DOMContentLoaded', () => {
+            // We'll now handle the tutorial in the startApp function
+            // instead of showing it automatically on page load
+            
+            // Add keyboard accessibility to tutorial
+            document.querySelector('.help-button').setAttribute('tabindex', '0');
+            document.querySelector('.help-button').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleTutorial();
+                }
+            });
+            
+            // Initialize the step progress indicator
+            updateStepProgress();
+            
+            // Modify train function to show progress after it's loaded
+            if (typeof doTraining === 'function') {
+                const originalDoTraining = doTraining;
+                doTraining = function() {
+                    showTrainingProgress(true);
+                    updateTrainingProgress(5, 'Preparing model...');
+                    
+                    // Mock progress updates (this would ideally connect to actual training events)
+                    let progress = 5;
+                    const progressInterval = setInterval(() => {
+                        progress += 5;
+                        if (progress <= 95) {
+                            updateTrainingProgress(progress, `Training model: ${progress}%`);
+                        } else {
+                            clearInterval(progressInterval);
+                        }
+                    }, 300);
+                    
+                    originalDoTraining();
+                    
+                    // Hide progress after completion
+                    setTimeout(() => {
+                        updateTrainingProgress(100, 'Training complete!');
+                        setTimeout(() => {
+                            showTrainingProgress(false);
+                        }, 1500);
+                    }, 4000);
+                };
+            }
+        });
+        
+        function toggleTutorial() {
+            const tutorial = document.getElementById('tutorial');
+            
+            if (tutorial.style.display === 'block') {
+                tutorial.style.opacity = '0';
+                setTimeout(() => {
+                    tutorial.style.display = 'none';
+                }, 400);
+            } else {
+                tutorial.style.display = 'block';
+                setTimeout(() => {
+                    tutorial.style.opacity = '1';
+                }, 10);
+            }
+        }
+
+        // Game session timer
+        let gameTimerInterval;
+        let gameSeconds = 0;
+        
+        function startGameTimer() {
+            // Reset timer
+            gameSeconds = 0;
+            updateGameTimerDisplay();
+            
+            // Show timer panel
+            document.getElementById('gameTimerPanel').style.display = 'block';
+            
+            // Start interval
+            gameTimerInterval = setInterval(() => {
+                gameSeconds++;
+                updateGameTimerDisplay();
+            }, 1000);
+        }
+        
+        function stopGameTimer() {
+            clearInterval(gameTimerInterval);
+        }
+        
+        function updateGameTimerDisplay() {
+            const minutes = Math.floor(gameSeconds / 60);
+            const seconds = gameSeconds % 60;
+            document.getElementById('gameTimer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Update move counter
+        function updateMovesCounter(count) {
+            document.getElementById('movesCounter').textContent = count;
+        }
+        
+        // Modify startPredicting and stopPredicting to include timer
+        const originalStartPredicting = startPredicting;
+        startPredicting = function() {
+            originalStartPredicting();
+            startGameTimer();
+        };
+        
+        const originalStopPredicting = stopPredicting;
+        stopPredicting = function() {
+            originalStopPredicting();
+            stopGameTimer();
+        };
+        
+        // Display training progress
+        function showTrainingProgress(show) {
+            document.getElementById('trainingProgressPanel').style.display = show ? 'block' : 'none';
+        }
+        
+        function updateTrainingProgress(progress, status) {
+            document.getElementById('trainingProgressBar').style.width = `${progress}%`;
+            document.getElementById('trainingStatus').textContent = status;
+        }
+    </script>
+
+    <script src="C1_W4_Assignment.js"></script>
+</body>
+</html>
