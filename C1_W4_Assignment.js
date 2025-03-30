@@ -1061,20 +1061,31 @@ function startSpeedChallenge() {
 
 function toggleMusic() {
   const bgMusic = document.getElementById("bgMusic");
-    const musicBtn = document.getElementById("music");
+  const musicBtn = document.getElementById("music");
     
   if (bgMusic.paused) {
         bgMusic.volume = 0.5; // Set volume to 50%
-        bgMusic.play().then(() => {
+        const playPromise = bgMusic.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    musicBtn.innerText = "Music: On";
+                    musicBtn.classList.add('glow');
+                    setTimeout(() => musicBtn.classList.remove('glow'), 1000);
+                })
+                .catch(err => {
+                    console.error("Music playback failed:", err);
+                    alert("Music failed—check console!");
+                });
+        } else {
+            // For older browsers that don't return a promise
             musicBtn.innerText = "Music: On";
             musicBtn.classList.add('glow');
             setTimeout(() => musicBtn.classList.remove('glow'), 1000);
-        }).catch(err => {
-      console.error("Music playback failed:", err);
-      alert("Music failed—check console!");
-    });
+        }
   } else {
-    bgMusic.pause();
+        bgMusic.pause();
         musicBtn.innerText = "Music: Off";
         musicBtn.classList.remove('glow');
   }

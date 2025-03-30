@@ -1167,12 +1167,12 @@
                         <div class="panel-title">Step 1: Capture Training Samples</div>
                         <div class="coach-tip">A pre-trained model is already loaded, so you can start playing immediately! You can also train your own model for better accuracy.</div>
                         <div class="button-group">
-                            <button type="button" id="0" onclick="handleButton(this)" ontouchstart="handleButton(this)">Rock</button>
-                            <button type="button" id="1" onclick="handleButton(this)" ontouchstart="handleButton(this)">Paper</button>
-                            <button type="button" id="2" onclick="handleButton(this)" ontouchstart="handleButton(this)">Scissors</button>
-                            <button type="button" id="3" onclick="handleButton(this)" ontouchstart="handleButton(this)">Spock</button>
-                            <button type="button" id="4" onclick="handleButton(this)" ontouchstart="handleButton(this)">Lizard</button>
-                            <button type="button" id="5" onclick="handleButton(this)" ontouchstart="handleButton(this)">Custom</button>
+                            <button type="button" id="0" onclick="handleButton(this)">Rock</button>
+                            <button type="button" id="1" onclick="handleButton(this)">Paper</button>
+                            <button type="button" id="2" onclick="handleButton(this)">Scissors</button>
+                            <button type="button" id="3" onclick="handleButton(this)">Spock</button>
+                            <button type="button" id="4" onclick="handleButton(this)">Lizard</button>
+                            <button type="button" id="5" onclick="handleButton(this)">Custom</button>
                         </div>
                         
                         <div class="samples">
@@ -1189,8 +1189,8 @@
                         <div class="panel-title">Step 2: Train The AI</div>
                         <div class="coach-tip">Collect at least 15 samples for each gesture, then train the network.</div>
                         <div class="button-group">
-                            <button type="button" id="train" class="btn-primary" onclick="doTraining(); markPhaseComplete('train');" ontouchstart="doTraining(); markPhaseComplete('train');">Train Network</button>
-                            <button type="button" id="moreSamples" onclick="addMoreSamples()" ontouchstart="addMoreSamples()">Add More Samples</button>
+                            <button type="button" id="train" class="btn-primary" onclick="doTraining(); markPhaseComplete('train');">Train Network</button>
+                            <button type="button" id="moreSamples" onclick="addMoreSamples()">Add More Samples</button>
                         </div>
                         <div id="modelStats" class="feedback-message" style="margin-top:10px;"></div>
                     </div>
@@ -1199,9 +1199,9 @@
                         <div class="panel-title">Save/Load Your Training</div>
                         <div class="coach-tip">Save your model to use later, or load a previously trained model.</div>
                         <div class="button-group">
-                            <button type="button" id="saveModel" onclick="saveModel()" ontouchstart="saveModel()">Save Model</button>
-                            <button type="button" id="loadModel" onclick="loadModel(); markPhaseComplete('train');" ontouchstart="loadModel(); markPhaseComplete('train');">Load Model</button>
-                            <button type="button" id="saveDataset" onclick="saveDataset()" ontouchstart="saveDataset()">Save Dataset</button>
+                            <button type="button" id="saveModel" onclick="saveModel()">Save Model</button>
+                            <button type="button" id="loadModel" onclick="loadModel(); markPhaseComplete('train');">Load Model</button>
+                            <button type="button" id="saveDataset" onclick="saveDataset()">Save Dataset</button>
                         </div>
                     </div>
                 </div>
@@ -1213,8 +1213,8 @@
                     <div class="panel">
                         <div class="panel-title">Practice Controls</div>
                         <div class="button-group">
-                            <button type="button" id="startPractice" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Practice Mode';" ontouchstart="startPredicting(); document.getElementById('gameState').textContent = 'Practice Mode';">Start Practice</button>
-                            <button type="button" id="stopPractice" onclick="stopPredicting()" ontouchstart="stopPredicting()">Stop Practice</button>
+                            <button type="button" id="startPractice" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Practice Mode';">Start Practice</button>
+                            <button type="button" id="stopPractice" onclick="stopPredicting()">Stop Practice</button>
                         </div>
                     </div>
                     
@@ -1222,7 +1222,7 @@
                     
                     <div class="panel">
                         <div class="panel-title">Ready to Play?</div>
-                        <button type="button" class="btn-action" onclick="switchToPhase('play'); markPhaseComplete('practice');" ontouchstart="switchToPhase('play'); markPhaseComplete('practice');">Continue to Game Mode</button>
+                        <button type="button" class="btn-action" onclick="switchToPhase('play'); markPhaseComplete('practice');">Continue to Game Mode</button>
                     </div>
                 </div>
                 
@@ -1233,8 +1233,8 @@
                     <div class="panel">
                         <div class="panel-title">Game Controls</div>
                         <div class="button-group">
-                            <button type="button" id="startPredicting" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Game Mode';" ontouchstart="startPredicting(); document.getElementById('gameState').textContent = 'Game Mode';">Start Game</button>
-                            <button type="button" id="stopPredicting" onclick="stopPredicting()" ontouchstart="stopPredicting()">Stop Game</button>
+                            <button type="button" id="startPredicting" class="btn-primary" onclick="startPredicting(); document.getElementById('gameState').textContent = 'Game Mode';">Start Game</button>
+                            <button type="button" id="stopPredicting" onclick="stopPredicting()">Stop Game</button>
                         </div>
                     </div>
                     
@@ -1251,7 +1251,7 @@
                     
                     <div class="panel">
                         <div class="panel-title">Ready for a Challenge?</div>
-                        <button type="button" class="btn-action" onclick="switchToPhase('challenge'); markPhaseComplete('play');" ontouchstart="switchToPhase('challenge'); markPhaseComplete('play');">Continue to Challenge Mode</button>
+                        <button type="button" class="btn-action" onclick="switchToPhase('challenge'); markPhaseComplete('play');">Continue to Challenge Mode</button>
                     </div>
                 </div>
                 
@@ -1262,16 +1262,16 @@
                     <div class="panel">
                         <div class="panel-title">Game Modes</div>
                         <div class="button-group">
-                            <button type="button" id="multiplayer" onclick="toggleMultiplayer()" ontouchstart="toggleMultiplayer()">Multiplayer: Off</button>
-                            <button type="button" id="speedChallenge" class="btn-action" onclick="startSpeedChallenge(); document.getElementById('gameState').textContent = 'Speed Challenge';" ontouchstart="startSpeedChallenge(); document.getElementById('gameState').textContent = 'Speed Challenge';">Speed Challenge</button>
+                            <button type="button" id="multiplayer" onclick="toggleMultiplayer()">Multiplayer: Off</button>
+                            <button type="button" id="speedChallenge" class="btn-action" onclick="startSpeedChallenge(); document.getElementById('gameState').textContent = 'Speed Challenge';">Speed Challenge</button>
                         </div>
                     </div>
                     
                     <div class="panel">
                         <div class="panel-title">Settings</div>
                         <div class="button-group">
-                            <button type="button" id="boostMode" onclick="toggleBoostMode()" ontouchstart="toggleBoostMode()">Boost Mode: Off</button>
-                            <button type="button" id="music" onclick="toggleMusic()" ontouchstart="toggleMusic()">Music: Off</button>
+                            <button type="button" id="boostMode" onclick="toggleBoostMode()">Boost Mode: Off</button>
+                            <button type="button" id="music" onclick="toggleMusic()">Music: Off</button>
                         </div>
                     </div>
                     
@@ -1284,7 +1284,7 @@
     </div>
 
     
-    <div class="help-button" onclick="toggleTutorial()" ontouchstart="toggleTutorial()">
+    <div class="help-button" onclick="toggleTutorial()">
         <span>?</span>
     </div>
 
@@ -1498,7 +1498,6 @@
     <audio id="bgMusic" src="music/Warriyo - NCS.mp3" loop></audio>
 
     <script>
-
         function startApp() {
             document.getElementById('introScreen').classList.add('hidden');
 
@@ -1510,22 +1509,17 @@
             }
         }
 
-
         function switchTutorialTab(tabName) {
-
             document.querySelectorAll('.tutorial-section').forEach(section => {
                 section.classList.remove('active');
             });
             
-
             document.getElementById(tabName + '-tab').classList.add('active');
             
-
             document.querySelectorAll('.tutorial-nav-item').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-
             const tabs = document.querySelectorAll('.tutorial-nav-item');
             for (let i = 0; i < tabs.length; i++) {
                 if (tabs[i].onclick.toString().includes(tabName)) {
@@ -1535,17 +1529,13 @@
             }
         }
 
-
         function switchToPhase(phaseName) {
-
             document.querySelectorAll('.phase-panel').forEach(panel => {
                 panel.classList.remove('active');
             });
             
-
             document.getElementById(phaseName + '-phase').classList.add('active');
             
-
             document.querySelectorAll('.step').forEach(step => {
                 step.classList.remove('active');
                 if (step.dataset.phase === phaseName) {
@@ -1553,21 +1543,17 @@
                 }
             });
             
-
             updateStepProgress();
         }
         
-
         function markPhaseComplete(phaseName) {
             const completedStep = document.querySelector(`.step[data-phase="${phaseName}"]`);
             if (completedStep) {
                 completedStep.classList.add('completed');
                 
-
                 const steps = Array.from(document.querySelectorAll('.step'));
                 const currentIndex = steps.indexOf(completedStep);
                 if (currentIndex < steps.length - 1) {
-
                     if (phaseName === 'train') {
                         document.getElementById('success-train').style.display = 'block';
                         setTimeout(() => {
@@ -1577,31 +1563,22 @@
                 }
             }
             
-
             updateStepProgress();
         }
         
-
         function updateStepProgress() {
             const steps = document.querySelectorAll('.step');
             const completedSteps = document.querySelectorAll('.step.completed').length;
             const activeStep = document.querySelector('.step.active');
             const activeIndex = Array.from(steps).indexOf(activeStep);
             
-
             const totalSteps = steps.length;
             const progress = ((completedSteps + (activeIndex > completedSteps ? 0.5 : 0)) / totalSteps) * 100;
             
-
             document.querySelector('.step-progress').style.width = `${progress}%`;
         }
 
-
         document.addEventListener('DOMContentLoaded', () => {
-
-
-            
-
             document.querySelector('.help-button').setAttribute('tabindex', '0');
             document.querySelector('.help-button').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -1610,17 +1587,14 @@
                 }
             });
             
-
             updateStepProgress();
             
-
             if (typeof doTraining === 'function') {
                 const originalDoTraining = doTraining;
                 doTraining = function() {
                     showTrainingProgress(true);
                     updateTrainingProgress(5, 'Preparing model...');
                     
-
                     let progress = 5;
                     const progressInterval = setInterval(() => {
                         progress += 5;
@@ -1633,7 +1607,6 @@
                     
                     originalDoTraining();
                     
-
                     setTimeout(() => {
                         updateTrainingProgress(100, 'Training complete!');
                         setTimeout(() => {
@@ -1660,19 +1633,15 @@
             }
         }
 
-
         let gameTimerInterval;
         let gameSeconds = 0;
         
         function startGameTimer() {
-
             gameSeconds = 0;
             updateGameTimerDisplay();
             
-
             document.getElementById('gameTimerPanel').style.display = 'block';
             
-
             gameTimerInterval = setInterval(() => {
                 gameSeconds++;
                 updateGameTimerDisplay();
@@ -1690,12 +1659,10 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
         
-
         function updateMovesCounter(count) {
             document.getElementById('movesCounter').textContent = count;
         }
         
-
         const originalStartPredicting = startPredicting;
         startPredicting = function() {
             originalStartPredicting();
@@ -1708,7 +1675,6 @@
             stopGameTimer();
         };
         
-
         function showTrainingProgress(show) {
             document.getElementById('trainingProgressPanel').style.display = show ? 'block' : 'none';
         }
@@ -1717,6 +1683,44 @@
             document.getElementById('trainingProgressBar').style.width = `${progress}%`;
             document.getElementById('trainingStatus').textContent = status;
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const allButtons = document.querySelectorAll('button');
+            
+            allButtons.forEach(button => {
+                if (button.hasAttribute('ontouchstart')) {
+                    const touchStartFn = button.getAttribute('ontouchstart');
+                    button.removeAttribute('ontouchstart');
+                    
+                    button.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        eval(touchStartFn);
+                    }, {passive: false});
+                }
+                
+                button.addEventListener('touchstart', function(e) {
+                    this.style.transform = 'scale(0.95)';
+                }, {passive: true});
+                
+                button.addEventListener('touchend', function(e) {
+                    this.style.transform = 'scale(1)';
+                    
+                    if (!button.hasAttribute('ontouchstart') && !button._hasTouchListener) {
+                        e.preventDefault();
+                        this.click();
+                    }
+                }, {passive: false});
+            });
+            
+            const musicButton = document.getElementById('music');
+            if (musicButton) {
+                musicButton._hasTouchListener = true;
+                musicButton.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    toggleMusic();
+                }, {passive: false});
+            }
+        });
     </script>
 
     <script src="C1_W4_Assignment.js"></script>
