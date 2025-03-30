@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPSLS - Neon Tech</title>
-    <!-- Favicon -->
+    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>" type="image/svg+xml">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="webcam.js"></script>
@@ -1054,7 +1054,7 @@
     </style>
 </head>
 <body>
-    <!-- Intro Screen -->
+    
     <div class="intro-screen" id="introScreen">
         <svg class="intro-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -1082,16 +1082,16 @@
 
     <div id="loading" class="loading">
         <div class="loading-spinner"></div>
-        <!-- Loading message will be added by JavaScript -->
+        
     </div>
 
     <div class="container">
         <h1 class="game-title">Rock Paper Scissors Lizard Spock</h1>
         
-        <!-- Game State Indicator -->
+        
         <div class="game-state" id="gameState">Training Mode</div>
         
-        <!-- Step Indicator -->
+        
         <div class="step-indicator">
             <div class="step active" data-phase="train" onclick="switchToPhase('train')">
                 <div class="step-number">1</div>
@@ -1131,7 +1131,7 @@
                 
                 <div id="success-train" class="success-indicator">Training completed successfully! You can now start playing.</div>
                 
-                <!-- Training Progress Indicator -->
+                
                 <div class="panel" id="trainingProgressPanel" style="display: none;">
                     <div class="panel-title">Training Progress</div>
                     <div class="training-progress">
@@ -1140,7 +1140,7 @@
                     <div id="trainingStatus" style="text-align: center; margin-top: 8px;">Preparing model...</div>
                 </div>
                 
-                <!-- Game Timer -->
+                
                 <div class="panel" id="gameTimerPanel" style="display: none;">
                     <div class="panel-title">Game Session</div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px;">
@@ -1159,7 +1159,7 @@
             </div>
             
             <div class="controls-section">
-                <!-- Phase 1: Training Mode -->
+                
                 <div id="train-phase" class="phase-panel active">
                     <div class="coach-tip">First, let's train the AI to recognize your hand gestures. Click each button below while showing the corresponding gesture.</div>
                     
@@ -1205,7 +1205,7 @@
                     </div>
                 </div>
                 
-                <!-- Phase 2: Practice Mode -->
+                
                 <div id="practice-phase" class="phase-panel">
                     <div class="coach-tip">Practice mode lets you test if your gestures are recognized correctly. Try all gestures without playing against the computer.</div>
                     
@@ -1225,7 +1225,7 @@
                     </div>
                 </div>
                 
-                <!-- Phase 3: Game Mode -->
+                
                 <div id="play-phase" class="phase-panel">
                     <div class="coach-tip">Now it's time to play against the computer! Make your gesture, and the computer will make its move.</div>
                     
@@ -1254,7 +1254,7 @@
                     </div>
                 </div>
                 
-                <!-- Phase 4: Challenge Mode -->
+                
                 <div id="challenge-phase" class="phase-panel">
                     <div class="coach-tip">Challenge yourself with special game modes! Try to beat the computer in rapid succession or play with a friend.</div>
                     
@@ -1282,12 +1282,12 @@
         <div id="credit">Created by Syed Ahmer Shah - Enhanced UI/UX Version</div>
     </div>
 
-    <!-- Floating Help Button -->
+    
     <div class="help-button" onclick="toggleTutorial()" ontouchstart="toggleTutorial()">
         <span>?</span>
     </div>
 
-    <!-- Enhanced Tutorial/Help Interface -->
+    
     <div id="tutorial">
         <div class="tutorial-container">
             <div class="tutorial-header">
@@ -1302,7 +1302,7 @@
             </div>
             
             <div class="tutorial-content">
-                <!-- Gestures Tab -->
+                
                 <div id="gestures-tab" class="tutorial-section active">
                     <div class="tutorial-gesture">
                         <div class="gesture-icon">👊</div>
@@ -1353,7 +1353,7 @@
                     </div>
                 </div>
                 
-                <!-- How to Play Tab -->
+                
                 <div id="howtoplay-tab" class="tutorial-section">
                     <div class="tutorial-steps">
                         <h4>Getting Started</h4>
@@ -1421,7 +1421,7 @@
                     </div>
                 </div>
                 
-                <!-- Troubleshooting Tab -->
+                
                 <div id="troubleshooting-tab" class="tutorial-section">
                     <div class="tutorial-steps">
                         <h4>Camera Issues</h4>
@@ -1493,7 +1493,7 @@
         </div>
     </div>
 
-    <!-- Changed to desi funny techy music -->
+    
     <audio id="bgMusic" src="music/Doraemon.mp3" loop></audio>
 
     <script>
