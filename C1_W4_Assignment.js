@@ -20,18 +20,18 @@ let lastPrediction = -1;
 let predictionBuffer = [];
 let frameCount = 0;
 
-// Create a worker for background tasks if supported
+
 let worker = null;
 if (window.Worker) {
     try {
-        // This is a placeholder - in a real implementation, you'd create a worker file
-        // worker = new Worker('prediction-worker.js');
+
+
     } catch (e) {
         console.log('Worker creation failed:', e);
     }
 }
 
-// Initialize loading element
+
 document.addEventListener('DOMContentLoaded', () => {
     loadingElement = document.getElementById('loading');
     statusElement = document.getElementById('status');
@@ -59,7 +59,7 @@ function updateStatus(state) {
 function showLoading(show, message = "Loading...") {
     if (loadingElement) {
         if (show) {
-            // Create loading message if not exists
+
             let messageElement = loadingElement.querySelector('.loading-message');
             if (!messageElement) {
                 messageElement = document.createElement('div');
@@ -74,7 +74,7 @@ function showLoading(show, message = "Loading...") {
             loadingElement.style.display = 'flex';
             loadingElement.style.opacity = '1';
         } else {
-            // Fade out loading spinner for smoother transition
+
             loadingElement.style.opacity = '0';
             setTimeout(() => {
                 loadingElement.style.display = 'none';
@@ -101,7 +101,7 @@ async function loadMobilenet() {
     }
 }
 
-// Use TensorFlow memory management to optimize performance
+
 function cleanup() {
     if (tf.memory().numTensors > 50) {
         console.log('Memory cleanup - tensors before:', tf.memory().numTensors);
@@ -110,7 +110,7 @@ function cleanup() {
     }
 }
 
-// Optimize training with progressive loading
+
 async function train(epochs = 10) {
     if (dataset.labels.length < 5) {
         alert("Please add at least 5 samples of each gesture before training.");
@@ -120,11 +120,11 @@ async function train(epochs = 10) {
     updateStatus('training');
     showLoading(true);
     
-    // Add visual feedback
+
     const feedbackElement = document.getElementById("dummy");
     feedbackElement.innerText = "Training in progress... Please wait.";
     
-    // Create progress element
+
     const progressContainer = document.createElement('div');
     progressContainer.className = 'training-progress';
     progressContainer.style.width = '100%';
@@ -145,11 +145,11 @@ async function train(epochs = 10) {
     progressContainer.appendChild(progressBar);
     feedbackElement.appendChild(progressContainer);
     
-    // Encode labels
+
     dataset.ys = null;
     dataset.encodeLabels(multiplayerMode || customSamples > 0 ? 6 : 5);
     
-    // Create or update the model with improved architecture
+
     if (!model) {
         model = tf.sequential({
             layers: [
@@ -174,7 +174,7 @@ async function train(epochs = 10) {
         });
     }
     
-    // Use adaptive learning rate
+
     const learningRate = 0.0001;
     const optimizer = tf.train.adam(learningRate);
     
@@ -184,7 +184,7 @@ async function train(epochs = 10) {
         metrics: ['accuracy'] 
     });
    
-    // Train with early stopping
+
     let bestLoss = Infinity;
     let patience = 3;
     let counter = 0;
@@ -208,7 +208,7 @@ async function train(epochs = 10) {
                         
                         feedbackElement.appendChild(progressContainer);
                         
-                        // Allow UI updates between batches
+
                         await tf.nextFrame();
                     }
                 }
@@ -223,7 +223,7 @@ async function train(epochs = 10) {
             document.getElementById("modelStats").innerText = 
                 `Model Stats - Accuracy: ${trainingStats.accuracy}% | Loss: ${trainingStats.loss}`;
             
-            // Early stopping
+
             if (loss < bestLoss) {
                 bestLoss = loss;
                 counter = 0;
@@ -235,14 +235,14 @@ async function train(epochs = 10) {
                 }
             }
             
-            // Update progress bar
+
             progressBar.style.width = `${((epoch + 1) / actualEpochs) * 100}%`;
             
-            // Allow UI to update
+
             await tf.nextFrame();
         }
         
-        // Cleanup tensors
+
         cleanup();
         
         feedbackElement.innerText = 
@@ -268,7 +268,7 @@ function handleButton(elem) {
     return;
   }
     
-    // Add visual feedback
+
     elem.classList.add('glow');
     setTimeout(() => elem.classList.remove('glow'), 300);
     
@@ -299,18 +299,18 @@ function handleButton(elem) {
       break;
   }
     
-    // Use tf.tidy for automatic memory management
+
     tf.tidy(() => {
   const label = parseInt(elem.id);
   const img = tf.browser.fromPixels(video).resizeNearestNeighbor([224, 224]).toFloat().expandDims();
   dataset.addExample(mobilenet.predict(img), label);
     });
     
-    // Update UI
+
     const totalSamples = rockSamples + paperSamples + scissorsSamples + spockSamples + lizardSamples + customSamples;
     document.getElementById("dummy").innerHTML = `${totalSamples} total samples collected. ${totalSamples > 15 ? '<strong>Ready to train!</strong>' : 'Collect more samples...'}`;
     
-    // Highlight train button when enough samples collected
+
     if (totalSamples >= 15 && !model) {
         document.getElementById("train").classList.add('glow');
         setTimeout(() => document.getElementById("train").classList.remove('glow'), 2000);
@@ -318,19 +318,19 @@ function handleButton(elem) {
 }
 
 function smoothPredictions(newPrediction) {
-    // Add to prediction buffer (recent 5 frames)
+
     predictionBuffer.push(newPrediction);
     if (predictionBuffer.length > 5) {
         predictionBuffer.shift();
     }
     
-    // Count occurrences of each prediction
+
     const counts = {};
     predictionBuffer.forEach(p => {
         counts[p] = (counts[p] || 0) + 1;
     });
     
-    // Find most common prediction
+
     let maxCount = 0;
     let mostCommon = -1;
     
@@ -341,12 +341,12 @@ function smoothPredictions(newPrediction) {
         }
     }
     
-    // Only return a new prediction if it's stable (appears in majority of frames)
+
     if (maxCount >= 3 || (predictionBuffer.length < 5 && maxCount >= 2)) {
         return mostCommon;
     }
     
-    // Otherwise retain previous stable prediction
+
     return lastPrediction;
 }
 
@@ -365,16 +365,16 @@ async function predict() {
     
     try {
   while (isPredicting) {
-            // Optimize with frame skipping for smoother UI
+
             frameCount++;
             if (frameCount % 2 !== 0) {
-                // Process hand detection on every frame for responsiveness
+
     if (hands) await hands.send({ image: video });
                 await tf.nextFrame();
                 continue;
             }
             
-            // Skip if we're still processing the last prediction
+
             if (predictionThrottle) {
                 await tf.nextFrame();
                 continue;
@@ -382,7 +382,27 @@ async function predict() {
             
             predictionThrottle = true;
             
-            // Use tf.tidy for automatic memory management
+
+            const handGuideOverlay = document.querySelector('.hand-guide-overlay');
+            const isHandDetected = handGuideOverlay.classList.contains('hand-detected');
+            
+            if (!isHandDetected) {
+
+                predictionElement.innerText = "Place your hand in the frame";
+                predictionElement.classList.remove('active');
+                void predictionElement.offsetWidth; // Force reflow
+                predictionElement.classList.add('active');
+                
+
+                setTimeout(() => {
+                    predictionThrottle = false;
+                }, 50);
+                
+                await tf.nextFrame();
+                continue;
+            }
+            
+
     const predictedClass = tf.tidy(() => {
                 const img = tf.browser.fromPixels(video)
                     .resizeNearestNeighbor([224, 224])
@@ -400,16 +420,16 @@ async function predict() {
             const probs = await predictedClass.probs.data();
             const confidence = (Math.max(...probs) * 100).toFixed(1);
             
-            // Apply smoothing to predictions
+
             const smoothedClassId = smoothPredictions(classId);
             
             if (smoothedClassId !== lastPrediction) {
-                // Flash animation on new prediction
+
                 predictionElement.classList.remove('active');
                 void predictionElement.offsetWidth; // Force reflow
                 predictionElement.classList.add('active');
                 
-                // Update last prediction
+
                 lastPrediction = smoothedClassId;
             }
     
@@ -417,26 +437,26 @@ async function predict() {
             let predictionText = `I see ${gestureNames[smoothedClassId]}—${confidence}%`;
             predictionElement.innerText = predictionText;
 
-            // Update UI
+
     document.querySelectorAll(".button-group button").forEach(btn => btn.classList.remove("glow"));
             
-            // Only glow if confidence is above threshold
+
             if (confidence > 70) {
-                // Find and highlight the corresponding gesture button in the training panel
+
                 const gestureButton = document.getElementById(smoothedClassId);
                 if (gestureButton) {
                     gestureButton.classList.add("glow");
                 }
             }
             
-            // Update history with meaningful changes only
+
             if (predictionHistory.length === 0 || predictionHistory[0] !== gestureNames[smoothedClassId]) {
                 predictionHistory.unshift(gestureNames[smoothedClassId]);
     if (predictionHistory.length > 10) predictionHistory.pop();
     document.getElementById("history").innerText = "History: " + predictionHistory.join(", ");
             }
 
-            // Game logic
+
     if (speedChallenge) {
                 handleSpeedChallenge(smoothedClassId);
     } else if (multiplayerMode) {
@@ -451,12 +471,12 @@ async function predict() {
     predictedClass.classId.dispose();
     predictedClass.probs.dispose();
             
-            // Reset throttle after a short delay
+
             setTimeout(() => {
                 predictionThrottle = false;
             }, 50);
             
-            // Allow for UI updates
+
     await tf.nextFrame();
         }
     } catch (error) {
@@ -479,7 +499,7 @@ function updateScores(result) {
   else scores.ties++;
   document.getElementById("scores").innerText = `Scores - You: ${scores.wins} | AI: ${scores.losses} | Ties: ${scores.ties}`;
   
-  // Add visual feedback on score update
+
   const scoresElement = document.getElementById("scores");
   scoresElement.classList.remove('highlight-score');
   void scoresElement.offsetWidth; // Force reflow
@@ -503,7 +523,7 @@ function handleSpeedChallenge(classId) {
   if (speedSequence.length === 0) speedSequence = [0, 1, 2, 3, 4];
   if (classId === speedSequence[0]) {
     speedSequence.shift();
-        // Add visual feedback
+
         document.getElementById(classId).classList.add('glow');
         setTimeout(() => document.getElementById(classId).classList.remove('glow'), 500);
         
@@ -512,13 +532,13 @@ function handleSpeedChallenge(classId) {
       const speedResult = document.getElementById("speedResult");
       speedResult.innerText = `Speed Challenge Completed in ${timeTaken}s!`;
       
-      // Add celebration animation
+
       speedResult.classList.add('celebration');
       setTimeout(() => speedResult.classList.remove('celebration'), 3000);
       
       speedChallenge = false;
     } else {
-      // Show remaining sequence
+
       const gestureNames = ["Rock", "Paper", "Scissors", "Spock", "Lizard"];
       const remainingGestures = speedSequence.map(id => gestureNames[id]).join(", ");
       document.getElementById("speedResult").innerText = `Next: ${remainingGestures}`;
@@ -548,10 +568,10 @@ async function doTraining() {
     document.getElementById("train").disabled = false;
     
     if (success) {
-        // Successfully trained
+
         document.getElementById("train").classList.add('glow');
         setTimeout(() => document.getElementById("train").classList.remove('glow'), 1000);
-        // Highlight the start game button to guide the user
+
         document.getElementById("startPredicting").classList.add('glow');
         setTimeout(() => document.getElementById("startPredicting").classList.remove('glow'), 2000);
   alert("Training Done!");
@@ -580,14 +600,14 @@ function startPredicting() {
     return;
   }
     
-    // Reset variables for fresh start
+
   isPredicting = true;
     frameCount = 0;
     predictionThrottle = false;
     predictionBuffer = [];
     lastPrediction = -1;
     
-    // Clear any previous results
+
     document.getElementById("prediction").innerText = "";
     document.getElementById("gameResult").innerText = "";
     document.getElementById("history").innerText = "";
@@ -596,7 +616,7 @@ function startPredicting() {
     document.getElementById('startPredicting').classList.add('glow', 'btn-primary');
     document.getElementById('stopPredicting').classList.remove('glow');
     
-    // Show active hand guide
+
     document.querySelector('.hand-guide-overlay').style.display = 'flex';
     
   predict();
@@ -610,7 +630,7 @@ function stopPredicting() {
     document.getElementById('stopPredicting').classList.add('glow');
     setTimeout(() => document.getElementById('stopPredicting').classList.remove('glow'), 1000);
     
-    // Reset hand guide when not predicting
+
     document.querySelector('.hand-guide-overlay').classList.remove('hand-detected');
     
     updateStatus('ready');
@@ -627,7 +647,7 @@ function saveModel() {
     
     showLoading(true);
     
-    // Save both to downloads and IndexedDB for easier future loading
+
     Promise.all([
         model.save('downloads://my_model'),
         model.save('indexeddb://my_model')
@@ -652,11 +672,11 @@ async function loadModel() {
         
         document.getElementById("loadModel").disabled = true;
         
-        // Try multiple sources in sequence
+
         let loadedModel = null;
         
         try {
-            // Try IndexedDB first
+
             console.log("Trying to load from IndexedDB...");
             loadedModel = await tf.loadLayersModel('indexeddb://my_model');
             console.log("Successfully loaded from IndexedDB");
@@ -664,7 +684,7 @@ async function loadModel() {
             console.log("Failed to load from IndexedDB:", indexedDbError.message);
             
             try {
-                // Try local server path
+
                 console.log("Trying to load from server path...");
                 loadedModel = await tf.loadLayersModel('my_model.json');
                 console.log("Successfully loaded from server path");
@@ -672,7 +692,7 @@ async function loadModel() {
                 console.log("Failed to load from local path:", localError.message);
                 
                 try {
-                    // Try localhost with port
+
                     console.log("Trying to load from localhost...");
                     loadedModel = await tf.loadLayersModel('http://127.0.0.1:5500/my_model.json');
                     console.log("Successfully loaded from localhost");
@@ -686,7 +706,7 @@ async function loadModel() {
         if (loadedModel) {
             model = loadedModel;
             
-            // Save successfully loaded model to IndexedDB for future use
+
             try {
                 await model.save('indexeddb://my_model');
                 console.log("Model saved to IndexedDB for future use");
@@ -701,7 +721,7 @@ async function loadModel() {
             showLoading(false);
             updateStatus('ready');
             
-            // Update UI to show model is loaded
+
             document.getElementById("dummy").innerText = "Model loaded successfully! You can now start predicting.";
             
     alert("Model loaded successfully!");
@@ -713,10 +733,10 @@ async function loadModel() {
         showLoading(false);
         updateStatus('error');
         
-        // Create file input for manual model loading
+
         createModelFileInput();
         
-        // Try to provide a helpful error message
+
         let errorMsg = "Couldn't load the model automatically. You can:";
         errorMsg += "\n1. Check your network connection";
         errorMsg += "\n2. Ensure model files are in the correct location";
@@ -728,13 +748,13 @@ async function loadModel() {
 }
 
 function createModelFileInput() {
-    // Remove any existing file input
+
     const existingInput = document.getElementById('modelFileInput');
     if (existingInput) {
         existingInput.parentNode.removeChild(existingInput);
     }
     
-    // Create container for file input
+
     const container = document.createElement('div');
     container.id = 'modelFileInput';
     container.style.margin = '10px 0';
@@ -743,7 +763,7 @@ function createModelFileInput() {
     container.style.borderRadius = '8px';
     container.style.border = '1px solid rgba(255, 0, 0, 0.3)';
     
-    // Add header
+
     const header = document.createElement('div');
     header.innerText = 'Manual Model Loading';
     header.style.fontWeight = 'bold';
@@ -751,14 +771,14 @@ function createModelFileInput() {
     header.style.color = '#ff5500';
     container.appendChild(header);
     
-    // Add description
+
     const description = document.createElement('div');
     description.innerText = 'Select both model.json and weights.bin files:';
     description.style.fontSize = '12px';
     description.style.marginBottom = '8px';
     container.appendChild(description);
     
-    // Create file inputs
+
     const inputJson = document.createElement('input');
     inputJson.type = 'file';
     inputJson.id = 'modelJsonInput';
@@ -793,7 +813,7 @@ function createModelFileInput() {
     container.appendChild(inputLabel2);
     container.appendChild(inputWeights);
     
-    // Create load button
+
     const loadButton = document.createElement('button');
     loadButton.innerText = 'Load Selected Model Files';
     loadButton.classList.add('manualLoadBtn');
@@ -801,7 +821,7 @@ function createModelFileInput() {
     loadButton.style.marginTop = '8px';
     container.appendChild(loadButton);
     
-    // Add status text
+
     const statusText = document.createElement('div');
     statusText.id = 'modelLoadStatus';
     statusText.style.marginTop = '8px';
@@ -809,11 +829,11 @@ function createModelFileInput() {
     statusText.style.color = '#ccc';
     container.appendChild(statusText);
     
-    // Add container after the load model button
+
     const loadModelBtn = document.getElementById('loadModel');
     loadModelBtn.parentNode.insertBefore(container, loadModelBtn.nextSibling);
     
-    // Add event listener for manual loading
+
     loadButton.addEventListener('click', async () => {
         const jsonFile = document.getElementById('modelJsonInput').files[0];
         const weightsFile = document.getElementById('weightsInput').files[0];
@@ -837,29 +857,29 @@ function createModelFileInput() {
             showLoading(true);
             updateStatus('loading');
             
-            // Create a custom model loading handler using tf.io
+
             const modelUrl = URL.createObjectURL(jsonFile);
             const weightsUrl = URL.createObjectURL(weightsFile);
             
-            // Create modified JSON to use the weights URL
+
             const jsonContent = await jsonFile.text();
             const modelJSON = JSON.parse(jsonContent);
             
-            // Create a temporary element to load the model files
+
             const modelElement = document.createElement('div');
             modelElement.style.display = 'none';
             document.body.appendChild(modelElement);
             
-            // Custom weights loader
+
             const weightsHandler = tf.io.browserFiles([weightsFile]);
             
-            // Load model with weights
+
             model = await tf.loadLayersModel(tf.io.browserFiles([jsonFile, weightsFile]));
             
             showLoading(false);
             updateStatus('ready');
             
-            // Update UI
+
             document.getElementById("dummy").innerText = "Model loaded successfully from file! You can now start predicting.";
             container.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
             container.style.border = '1px solid rgba(0, 255, 0, 0.3)';
@@ -868,7 +888,7 @@ function createModelFileInput() {
             statusText.innerText = 'Model loaded successfully!';
             statusText.style.color = '#00ff00';
             
-            // Try to save to IndexedDB
+
             try {
                 await model.save('indexeddb://my_model');
                 console.log("Model saved to IndexedDB for future use");
@@ -877,11 +897,11 @@ function createModelFileInput() {
                 console.log("Note: Could not save model to IndexedDB:", saveError.message);
             }
             
-            // Show success feedback
+
             loadButton.classList.add('glow');
             setTimeout(() => loadButton.classList.remove('glow'), 1000);
             
-            // Clean up URLs
+
             URL.revokeObjectURL(modelUrl);
             URL.revokeObjectURL(weightsUrl);
             document.body.removeChild(modelElement);
@@ -899,7 +919,7 @@ function createModelFileInput() {
         }
     });
     
-    // Add file selection validation and feedback
+
     inputJson.addEventListener('change', () => {
         const file = inputJson.files[0];
         if (file) {
@@ -1033,7 +1053,7 @@ function startSpeedChallenge() {
   
   document.getElementById("speedChallenge").classList.add('glow');
     
-    // Start prediction if not already predicting
+
     if (!isPredicting) {
         startPredicting();
     }
@@ -1065,25 +1085,25 @@ function onHandsResults(results) {
     
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Update hand guide overlay based on hand detection
+
   const handGuideOverlay = document.querySelector('.hand-guide-overlay');
     
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        // Update UI to show hand is detected
+
         handGuideOverlay.classList.add('hand-detected');
         
-        // Draw landmarks with improved performance
+
         ctx.save();
         
     results.multiHandLandmarks.forEach((landmarks, index) => {
-            // Use color based on index for multiple hands
+
             ctx.strokeStyle = index === 0 ? "rgba(0, 255, 0, 0.8)" : "rgba(0, 204, 0, 0.8)";
       ctx.lineWidth = 2;
             
-            // Calculate bounding box for hand
+
       const bbox = getBoundingBox(landmarks);
             
-            // Draw bounding box with rounded corners
+
       ctx.beginPath();
             const radius = 10;
             ctx.moveTo(bbox.xMin + radius, bbox.yMin);
@@ -1097,16 +1117,16 @@ function onHandsResults(results) {
             ctx.arcTo(bbox.xMin, bbox.yMin, bbox.xMin + radius, bbox.yMin, radius);
             ctx.stroke();
             
-            // Draw glow effect
+
             ctx.shadowColor = "rgba(0, 255, 0, 0.7)";
             ctx.shadowBlur = 10;
       ctx.stroke();
             ctx.shadowBlur = 0;
             
-            // Draw connections between landmarks for better visualization
+
             drawConnectors(ctx, landmarks);
             
-            // Draw key points for better visualization
+
             const keyPoints = [0, 4, 8, 12, 16, 20]; // thumb tip, finger tips
             ctx.fillStyle = "rgba(0, 255, 255, 0.8)";
             keyPoints.forEach(point => {
@@ -1122,14 +1142,14 @@ function onHandsResults(results) {
         
         ctx.restore();
   } else {
-        // No hands detected - reset UI
+
         handGuideOverlay.classList.remove('hand-detected');
         
-        // Use a lighter visual indicator
+
         ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
     ctx.lineWidth = 2;
         
-        // Draw dashed outline to indicate no hand detected
+
         ctx.setLineDash([5, 5]);
     ctx.beginPath();
         ctx.rect(15, 15, canvas.width - 30, canvas.height - 30);
@@ -1138,9 +1158,9 @@ function onHandsResults(results) {
   }
 }
 
-// Draw connections between hand landmarks
+
 function drawConnectors(ctx, landmarks) {
-    // Define the connections
+
     const connections = [
         [0, 1], [1, 2], [2, 3], [3, 4], // thumb
         [0, 5], [5, 6], [6, 7], [7, 8], // index finger
@@ -1173,7 +1193,7 @@ function getBoundingBox(landmarks) {
     yMax = Math.max(yMax, lm.y * canvas.height);
   });
     
-    // Add padding
+
     const padding = 10;
     xMin = Math.max(0, xMin - padding);
     xMax = Math.min(canvas.width, xMax + padding);
@@ -1183,10 +1203,10 @@ function getBoundingBox(landmarks) {
   return { xMin, xMax, yMin, yMax };
 }
 
-// Add preload function to speed up model initialization
+
 async function preloadModels() {
     try {
-        // Try to load from IndexedDB first
+
         try {
             model = await tf.loadLayersModel('indexeddb://my_model');
             console.log("Preloaded model from IndexedDB");
@@ -1203,10 +1223,10 @@ async function preloadModels() {
     }
 }
 
-// Function to handle webcam errors more gracefully
+
 async function setupWebcam(constraints) {
     try {
-        // Release any existing stream
+
         if (videoStream) {
             videoStream.getTracks().forEach(track => track.stop());
         }
@@ -1240,12 +1260,12 @@ async function setupWebcam(constraints) {
     }
 }
 
-// Enhanced webcam fallback options
+
 async function tryWebcamWithFallbacks() {
     const video = document.getElementById("wc");
     showLoading(true, "Setting up camera...");
     
-    // Try high quality first
+
     const highQuality = { 
         video: { 
             width: { ideal: 224 },
@@ -1255,7 +1275,7 @@ async function tryWebcamWithFallbacks() {
         }
     };
     
-    // Medium quality fallback
+
     const mediumQuality = {
         video: {
             width: { ideal: 224 },
@@ -1265,14 +1285,14 @@ async function tryWebcamWithFallbacks() {
         }
     };
     
-    // Low quality fallback
+
     const lowQuality = {
         video: {
             facingMode: "user"
         }
     };
     
-    // Try each quality level
+
     let success = await setupWebcam(highQuality);
     if (!success) {
         console.log("High quality webcam failed, trying medium quality...");
@@ -1291,7 +1311,7 @@ async function tryWebcamWithFallbacks() {
         return true;
     } else {
         document.getElementById("dummy").innerText = "Camera setup failed. Check browser permissions.";
-        // Create help message for camera
+
         const container = document.createElement('div');
         container.style.margin = '10px 0';
         container.style.padding = '10px';
@@ -1309,7 +1329,7 @@ async function tryWebcamWithFallbacks() {
             </ol>
         `;
         
-        // Insert after dummy element
+
         const dummyElement = document.getElementById("dummy");
         dummyElement.parentNode.insertBefore(container, dummyElement.nextSibling);
         
@@ -1317,12 +1337,12 @@ async function tryWebcamWithFallbacks() {
     }
 }
 
-// Enhance init function with better loading sequence
+
 async function init() {
     showLoading(true, "Initializing...");
     
     try {
-        // Create dynamic loading progress updates
+
         const stages = [
             { name: "Loading MobileNet model...", weight: 40 },
             { name: "Setting up camera...", weight: 20 },
@@ -1339,7 +1359,7 @@ async function init() {
             }
         };
         
-        // Load MobileNet first for faster perceived performance
+
         updateProgressStage("Loading MobileNet model...");
         mobilenet = await loadMobilenet();
         if (!mobilenet) {
@@ -1347,19 +1367,19 @@ async function init() {
         }
         console.log("MobileNet loaded");
 
-        // Try to set up webcam with fallbacks
+
         updateProgressStage("Setting up camera...");
         const webcamSuccess = await tryWebcamWithFallbacks();
         if (!webcamSuccess) {
             console.error("All webcam attempts failed");
         }
         
-        // Initialize hand detection
+
         updateProgressStage("Initializing hand detection...");
         canvas = document.getElementById("handCanvas");
         ctx = canvas.getContext("2d");
         
-        // Initialize hand guide overlay
+
         const handGuideOverlay = document.querySelector('.hand-guide-overlay');
         
         hands = new Hands({
@@ -1378,7 +1398,7 @@ async function init() {
         await hands.initialize();
         console.log("MediaPipe Hands initialized");
         
-        // Try to preload any saved model - do last for better perceived load time
+
         updateProgressStage("Checking for saved models...");
         const modelPreloaded = await preloadModels();
         if (modelPreloaded) {
@@ -1386,7 +1406,7 @@ async function init() {
             setTimeout(() => document.getElementById("loadModel").classList.remove('glow'), 1000);
         }
         
-        // Everything is loaded
+
         showLoading(false);
         updateStatus('ready');
         
@@ -1396,22 +1416,22 @@ async function init() {
         showLoading(false);
         updateStatus('error');
         
-        // Show error details
+
         alert("Setup failed: " + error.message + "\nCheck console for details.");
     }
 }
 
-// Initialize the app
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize loading and status elements first
+
     loadingElement = document.getElementById('loading');
     statusElement = document.getElementById('status');
     updateStatus('initializing');
     
-    // Start initialization
+
     init();
     
-    // Make tutorial accessible by keyboard
+
     document.querySelectorAll('.tutorial-nav-item, .tutorial-button, .tutorial-close').forEach(el => {
         el.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {

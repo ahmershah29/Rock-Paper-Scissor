@@ -121,7 +121,7 @@
             background: #000;
             position: relative;
             z-index: 10;
-            transform: scaleX(-1); /* Mirror video for more intuitive interaction */
+            transform: scaleX(-1); 
         }
 
         canvas {
@@ -134,8 +134,8 @@
             left: 10px;
             pointer-events: none;
             background: transparent;
-            z-index: 15; /* Over video for hand detection */
-            transform: scaleX(-1); /* Mirror canvas to match video */
+            z-index: 15; 
+            transform: scaleX(-1); 
         }
 
         .hand-guide-overlay {
@@ -395,7 +395,7 @@
             100% { background: rgba(255, 255, 0, 0.05); }
         }
 
-        /* Training progress styles */
+        
         .training-progress {
             width: 100%;
             height: 10px;
@@ -413,7 +413,7 @@
             transition: width 0.3s ease;
         }
 
-        /* Score highlighting animation */
+        
         .highlight-score {
             animation: scoreUpdate 0.5s ease;
         }
@@ -424,7 +424,7 @@
             100% { transform: scale(1); }
         }
 
-        /* Celebration animation for speed challenge completion */
+        
         .celebration {
             animation: celebrate 3s ease;
         }
@@ -443,7 +443,7 @@
             100% { transform: scale(1); background: rgba(255, 255, 0, 0.05); }
         }
 
-        /* Make active game elements more noticeable */
+        
         .active {
             border-color: #00ff00;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
@@ -524,7 +524,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Improved Help Button */
+        
         .help-button {
             position: fixed;
             bottom: 20px;
@@ -550,7 +550,7 @@
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
         }
 
-        /* Enhanced Tutorial Overlay */
+        
         #tutorial {
             display: none;
             position: fixed;
@@ -812,7 +812,7 @@
             }
         }
 
-        /* Step indicator styles */
+        
         .step-indicator {
             display: flex;
             justify-content: space-between;
@@ -888,7 +888,7 @@
             border-color: rgba(0, 255, 0, 0.3);
         }
 
-        /* Phase panels */
+        
         .phase-panel {
             display: none;
         }
@@ -898,7 +898,7 @@
             animation: fadeIn 0.4s ease;
         }
 
-        /* Game state indicator */
+        
         .game-state {
             position: absolute;
             top: 10px;
@@ -912,7 +912,7 @@
             border: 1px solid rgba(0, 255, 255, 0.3);
         }
 
-        /* Coaching tips */
+        
         .coach-tip {
             background: rgba(255, 255, 0, 0.1);
             border-left: 3px solid #ffff00;
@@ -929,7 +929,7 @@
             font-weight: bold;
         }
 
-        /* Success indicator */
+        
         .success-indicator {
             background: rgba(0, 255, 0, 0.1);
             border: 1px solid rgba(0, 255, 0, 0.3);
@@ -945,7 +945,7 @@
             content: '✓ ';
         }
 
-        /* Intro screen */
+        
         .intro-screen {
             position: fixed;
             top: 0;
@@ -1124,7 +1124,7 @@
                 </div>
                 
                 <div class="gesture-guide">
-                    Make hand gestures to play • Show your move to the camera
+                    Place your hand in the center of the frame • Show a clear gesture to the camera
                 </div>
                 
                 <div id="status">Status: <span class="status-indicator status-inactive"></span> Initializing...</div>
@@ -1494,13 +1494,13 @@
     </div>
 
     <!-- Changed to desi funny techy music -->
-    <audio id="bgMusic" src="music/TECHNOLOGIA.mp3" loop></audio>
+    <audio id="bgMusic" src="music/Doraemon.mp3" loop></audio>
 
     <script>
-        // Function to start the app and hide intro screen
+
         function startApp() {
             document.getElementById('introScreen').classList.add('hidden');
-            // Show tutorial after intro screen if first visit
+
             if (!localStorage.getItem('tutorialShown')) {
                 setTimeout(() => {
                     toggleTutorial();
@@ -1509,22 +1509,22 @@
             }
         }
 
-        // Tutorial tab switching function
+
         function switchTutorialTab(tabName) {
-            // Hide all tutorial sections
+
             document.querySelectorAll('.tutorial-section').forEach(section => {
                 section.classList.remove('active');
             });
             
-            // Show selected section
+
             document.getElementById(tabName + '-tab').classList.add('active');
             
-            // Update tab buttons
+
             document.querySelectorAll('.tutorial-nav-item').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Find and activate clicked tab
+
             const tabs = document.querySelectorAll('.tutorial-nav-item');
             for (let i = 0; i < tabs.length; i++) {
                 if (tabs[i].onclick.toString().includes(tabName)) {
@@ -1534,17 +1534,17 @@
             }
         }
 
-        // Phase switching function
+
         function switchToPhase(phaseName) {
-            // Hide all phases
+
             document.querySelectorAll('.phase-panel').forEach(panel => {
                 panel.classList.remove('active');
             });
             
-            // Show selected phase
+
             document.getElementById(phaseName + '-phase').classList.add('active');
             
-            // Update step indicators
+
             document.querySelectorAll('.step').forEach(step => {
                 step.classList.remove('active');
                 if (step.dataset.phase === phaseName) {
@@ -1552,21 +1552,21 @@
                 }
             });
             
-            // Update progress indicator
+
             updateStepProgress();
         }
         
-        // Mark phase as completed
+
         function markPhaseComplete(phaseName) {
             const completedStep = document.querySelector(`.step[data-phase="${phaseName}"]`);
             if (completedStep) {
                 completedStep.classList.add('completed');
                 
-                // Find next step
+
                 const steps = Array.from(document.querySelectorAll('.step'));
                 const currentIndex = steps.indexOf(completedStep);
                 if (currentIndex < steps.length - 1) {
-                    // Show success indicator if applicable
+
                     if (phaseName === 'train') {
                         document.getElementById('success-train').style.display = 'block';
                         setTimeout(() => {
@@ -1576,31 +1576,31 @@
                 }
             }
             
-            // Update progress indicator
+
             updateStepProgress();
         }
         
-        // Update progress bar
+
         function updateStepProgress() {
             const steps = document.querySelectorAll('.step');
             const completedSteps = document.querySelectorAll('.step.completed').length;
             const activeStep = document.querySelector('.step.active');
             const activeIndex = Array.from(steps).indexOf(activeStep);
             
-            // Calculate progress (completed steps + partial credit for active step)
+
             const totalSteps = steps.length;
             const progress = ((completedSteps + (activeIndex > completedSteps ? 0.5 : 0)) / totalSteps) * 100;
             
-            // Update progress bar
+
             document.querySelector('.step-progress').style.width = `${progress}%`;
         }
 
-        // Auto-show tutorial on first visit
+
         document.addEventListener('DOMContentLoaded', () => {
-            // We'll now handle the tutorial in the startApp function
-            // instead of showing it automatically on page load
+
+
             
-            // Add keyboard accessibility to tutorial
+
             document.querySelector('.help-button').setAttribute('tabindex', '0');
             document.querySelector('.help-button').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -1609,17 +1609,17 @@
                 }
             });
             
-            // Initialize the step progress indicator
+
             updateStepProgress();
             
-            // Modify train function to show progress after it's loaded
+
             if (typeof doTraining === 'function') {
                 const originalDoTraining = doTraining;
                 doTraining = function() {
                     showTrainingProgress(true);
                     updateTrainingProgress(5, 'Preparing model...');
                     
-                    // Mock progress updates (this would ideally connect to actual training events)
+
                     let progress = 5;
                     const progressInterval = setInterval(() => {
                         progress += 5;
@@ -1632,7 +1632,7 @@
                     
                     originalDoTraining();
                     
-                    // Hide progress after completion
+
                     setTimeout(() => {
                         updateTrainingProgress(100, 'Training complete!');
                         setTimeout(() => {
@@ -1659,19 +1659,19 @@
             }
         }
 
-        // Game session timer
+
         let gameTimerInterval;
         let gameSeconds = 0;
         
         function startGameTimer() {
-            // Reset timer
+
             gameSeconds = 0;
             updateGameTimerDisplay();
             
-            // Show timer panel
+
             document.getElementById('gameTimerPanel').style.display = 'block';
             
-            // Start interval
+
             gameTimerInterval = setInterval(() => {
                 gameSeconds++;
                 updateGameTimerDisplay();
@@ -1689,12 +1689,12 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        // Update move counter
+
         function updateMovesCounter(count) {
             document.getElementById('movesCounter').textContent = count;
         }
         
-        // Modify startPredicting and stopPredicting to include timer
+
         const originalStartPredicting = startPredicting;
         startPredicting = function() {
             originalStartPredicting();
@@ -1707,7 +1707,7 @@
             stopGameTimer();
         };
         
-        // Display training progress
+
         function showTrainingProgress(show) {
             document.getElementById('trainingProgressPanel').style.display = show ? 'block' : 'none';
         }
